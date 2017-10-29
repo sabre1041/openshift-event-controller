@@ -42,9 +42,12 @@ def need_signature(event, config, logger):
 def check_image_annotation(event, config, logger):
     
     try:    
-        image_annotation = event['object']['metadata']['annotations'][config.get('imagesigner_annotation')]
-        logger.debug("Got an event with annotation with value: {0}".format(image_annotation))
-        return True
+        image_annotation = get_image_signer_annotation(config)
+        
+        if event['object']['metadata']['annotations'][image_annotation]:
+            return True
+        else:
+            return False
     except KeyError:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logger.debug("Error message: {0}".format(repr(traceback.format_exception(exc_type, exc_value, exc_traceback,
@@ -152,12 +155,10 @@ def locate_tag(image_reference, image_namespace, image_name, logger, watcher):
     
 
 def update_image(image_digest, config, watcher):
-    
-    update_image_annotation = config.get('imagesigner_annotation') if config.get('imagesigner_annotation') else "openshift.io/image-signer"
 
     req = requests.patch('https://{0}/oapi/v1/images/{1}'.format(watcher.config.k8s_endpoint, image_digest),
                         headers={'Authorization': 'Bearer {0}'.format(watcher.config.k8s_token), 'Content-Type':'application/strategic-merge-patch+json'},
-                        data=json.dumps({'metadata': {'annotations': {'{0}'.format(update_image_annotation): 'true'}}}),
+                        data=json.dumps({'metadata': {'annotations': {'{0}'.format(get_image_signer_annotation(config)): 'true'}}}),
                         params="", verify=watcher.config.k8s_ca)
     
     return True if req.status_code == 200 else False
@@ -167,3 +168,6 @@ def build_parameters(cmd, parameter_name, parameter):
     if parameter:
         cmd.append("-p")
         cmd.append("{0}={1}".format(parameter_name, parameter))
+
+def get_image_signer_annotation(config):
+    return config.get('imagesigner_annotation') if config.get('imagesigner_annotation') else "openshift.io/image-signer"
