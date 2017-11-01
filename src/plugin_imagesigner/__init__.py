@@ -9,7 +9,9 @@ def handle_event(watcher, event, config):
 
             template_result = instantiate_template(event, config, watcher.logger, watcher)
 
-            if template_result:
+            if template_result is None:
+                response_msg = "Signature Not Needed"
+            elif template_result:
                 update_image_result = update_image(event['object']['metadata']['name'], config, watcher)
 
                 if update_image_result:
