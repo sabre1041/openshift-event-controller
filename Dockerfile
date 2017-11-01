@@ -20,6 +20,7 @@ COPY ./bin/ /opt/event-controller/bin
 RUN wget -O $HOME/origin-client.tar.gz $ORIGIN_CLIENT && \
     tar -xzf $HOME/origin-client.tar.gz -C $HOME && \
     cp $HOME/openshift-origin-client-tools-v3.6.0-c4dd4cf-linux-64bit/oc /usr/bin/oc && \
+    rm -rf $HOME/origin-client.tar.gz $HOME/openshift-origin-client-tools-v3.6.0-c4dd4cf-linux-64bit && \
     chown -R 1001:1001 /opt/event-controller
 
 USER 1001
